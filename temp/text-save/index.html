@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Glowing Workspace</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(20, 22, 28, 0.85);
+            --card-border: #2a2d36;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.5);
+            --accent-hover: #4f46e5;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.5);
+            --pin-active: #f59e0b;
+            --pin-glow: rgba(245, 158, 11, 0.5);
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Background Glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: -10%;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle at 50% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(10, 10, 12, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(165, 180, 252, 0.3);
+        }
+
+        .add-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .add-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .container {
+            padding: 40px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 28px;
+            align-content: flex-start;
+        }
+
+        .note-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            height: 340px;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Hover Glow Effect */
+        .note-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .note-card.pinned {
+            border-color: rgba(245, 158, 11, 0.6);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .note-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--card-border);
+            background-color: rgba(0,0,0,0.2);
+            gap: 8px;
+            border-radius: 16px 16px 0 0;
+        }
+
+        /* Editable Title */
+        .note-title {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 500;
+            outline: none;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .note-title::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .note-title:focus {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .icon-btn.pin.active {
+            color: var(--pin-active);
+            filter: drop-shadow(0 0 5px var(--pin-glow));
+        }
+
+        .icon-btn.copy:hover {
+            color: #3b82f6;
+            filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+        }
+
+        .icon-btn.close:hover {
+            color: var(--danger);
+            background-color: rgba(239, 68, 68, 0.15);
+            filter: drop-shadow(0 0 5px var(--danger-glow));
+        }
+
+        .icon-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        textarea {
+            flex-grow: 1;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            padding: 20px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        textarea::placeholder { color: #4b5563; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        @media (max-width: 600px) {
+            header { padding: 15px 20px; }
+            .container { padding: 20px; grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Workspace</h1>
+        <button class="add-btn" id="addBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Note
+        </button>
+    </header>
+
+    <div class="container" id="notesContainer"></div>
+
+    <script>
+        const container = document.getElementById('notesContainer');
+        const addBtn = document.getElementById('addBtn');
+        const STORAGE_KEY = 'premium_workspace_notes_v2'; // Keeping same key so you don't lose old data
+
+        let notes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+        function saveNotes() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+        }
+
+        // Render all notes based on the array order
+        function renderAllNotes() {
+            container.innerHTML = '';
+            notes.forEach(noteData => {
+                const card = document.createElement('div');
+                card.className = `note-card ${noteData.isPinned ? 'pinned' : ''}`;
+                
+                // SVG Icons
+                const iconUp = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
+                const iconPin = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`;
+                const iconCopy = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+                const iconClear = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>`;
+                const iconClose = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                
+                card.innerHTML = `
+                    <div class="note-header">
+                        <input type="text" class="note-title" placeholder="Title..." value="${noteData.title || ''}">
+                        <div class="header-actions">
+                            <button class="icon-btn up" title="Move Up">${iconUp}</button>
+                            <button class="icon-btn pin ${noteData.isPinned ? 'active' : ''}" title="${noteData.isPinned ? 'Unpin' : 'Pin to Top'}">${iconPin}</button>
+                            <button class="icon-btn copy" title="Copy Text">${iconCopy}</button>
+                            <button class="icon-btn clear" title="Clear Text">${iconClear}</button>
+                            <button class="icon-btn close" title="Delete Note">${iconClose}</button>
+                        </div>
+                    </div>
+                    <textarea placeholder="Type something... auto-saved instantly.">${noteData.text}</textarea>
+                `;
+
+                // Sub-elements
+                const titleInput = card.querySelector('.note-title');
+                const textarea = card.querySelector('textarea');
+                
+                // Title auto-save
+                titleInput.addEventListener('input', (e) => {
+                    noteData.title = e.target.value;
+                    saveNotes();
+                });
+
+                // Text auto-save
+                textarea.addEventListener('input', (e) => {
+                    noteData.text = e.target.value;
+                    saveNotes();
+                });
+
+                // Copy functionality
+                card.querySelector('.copy').addEventListener('click', async (e) => {
+                    const btn = e.currentTarget;
+                    const textToCopy = textarea.value;
+                    
+                    try {
+                        await navigator.clipboard.writeText(textToCopy);
+                        // Temporarily show checkmark and glow green
+                        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                        btn.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.6))';
+                        
+                        setTimeout(() => {
+                            btn.innerHTML = iconCopy;
+                            btn.style.filter = '';
+                        }, 1500);
+                    } catch (err) {
+                        alert('Failed to copy text.');
+                    }
+                });
+
+                card.querySelector('.clear').addEventListener('click', () => {
+                    textarea.value = '';
+                    noteData.text = '';
+                    saveNotes();
+                    textarea.focus();
+                });
+
+                card.querySelector('.close').addEventListener('click', () => {
+                    notes = notes.filter(n => n.id !== noteData.id);
+                    saveNotes();
+                    renderAllNotes();
+                });
+
+                // Pin Logic
+                card.querySelector('.pin').addEventListener('click', () => {
+                    const idx = notes.findIndex(n => n.id === noteData.id);
+                    notes[idx].isPinned = !notes[idx].isPinned;
+                    const [toggledNote] = notes.splice(idx, 1);
+                    
+                    if (toggledNote.isPinned) {
+                        notes.unshift(toggledNote); // Move to very top
+                    } else {
+                        // Move to top of unpinned section
+                        let insertIdx = 0;
+                        while (insertIdx < notes.length && notes[insertIdx].isPinned) {
+                            insertIdx++;
+                        }
+                        notes.splice(insertIdx, 0, toggledNote);
+                    }
+                    saveNotes();
+                    renderAllNotes();
+                });
+
+                // Move Up Logic
+                card.querySelector('.up').addEventListener('click', () => {
+                    const idx = notes.findIndex(n => n.id === noteData.id);
+                    if (idx > 0) {
+                        const prevNote = notes[idx - 1];
+                        if (!noteData.isPinned && prevNote.isPinned) return;
+                        
+                        // Swap positions
+                        notes[idx] = prevNote;
+                        notes[idx - 1] = noteData;
+                        saveNotes();
+                        renderAllNotes();
+                    }
+                });
+
+                container.appendChild(card);
+            });
+        }
+
+        if (notes.length === 0) {
+            addNewNote();
+        } else {
+            renderAllNotes();
+        }
+
+        function addNewNote() {
+            notes.push({
+                id: Date.now(),
+                title: '',
+                text: '',
+                isPinned: false
+            });
+            saveNotes();
+            renderAllNotes();
+        }
+
+        addBtn.addEventListener('click', addNewNote);
+    </script>
+</body>
+</html>
