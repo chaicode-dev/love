@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageKit Account Status</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f4f4f9; 
+            padding: 40px 20px; 
+            display: flex;
+            justify-content: center;
+        }
+        .card { 
+            background: #fff; 
+            padding: 25px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            width: 100%;
+            max-width: 450px; 
+        }
+        h2 { margin-top: 0; color: #111; font-size: 20px; }
+        .warning { 
+            background: #fff3cd; 
+            color: #856404; 
+            padding: 12px; 
+            font-size: 13px; 
+            border-radius: 6px; 
+            margin-bottom: 20px; 
+            border: 1px solid #ffeeba; 
+            line-height: 1.4;
+        }
+        .stat { 
+            margin: 20px 0; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid #eee; 
+        }
+        .stat:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .label { font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .value { font-size: 28px; font-weight: bold; color: #222; margin: 8px 0; }
+        .limit-text { font-size: 14px; font-weight: normal; color: #888; }
+        .error { color: #d32f2f; font-size: 14px; background: #ffebee; padding: 10px; border-radius: 6px; display: none; }
+        .progress-bg { background: #e0e0e0; border-radius: 20px; height: 8px; width: 100%; overflow: hidden; margin-top: 10px; }
+        .progress-fill { background: #007bff; height: 100%; width: 0%; transition: width 0.5s ease-out; }
+        #loading { color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="warning">
+        <strong>Local Use Only:</strong> Because your private key is hardcoded below, only open this HTML file locally on your own computer. Do not upload it to a web server or GitHub repository.
+    </div>
+
+    <h2>ImageKit Free Plan Status</h2>
+    <div id="loading">Connecting to ImageKit...</div>
+    <div id="error" class="error"></div>
+    
+    <div id="stats" style="display: none;">
+        <div class="stat">
+            <div class="label">Bandwidth Used (This Month)</div>
+            <div class="value"><span id="bandwidth">0.00</span> GB <span class="limit-text">/ 20 GB</span></div>
+            <div class="progress-bg"><div id="bw-progress" class="progress-fill"></div></div>
+        </div>
+        
+        <div class="stat">
+            <div class="label">Media Library Storage Used</div>
+            <div class="value"><span id="storage">0.00</span> GB <span class="limit-text">/ 3 GB</span></div>
+            <div class="progress-bg"><div id="st-progress" class="progress-fill"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------------------------------------------------------
+    // 1. REPLACE THIS WITH YOUR ACTUAL IMAGEKIT PRIVATE API KEY
+    // ---------------------------------------------------------
+    const PRIVATE_KEY = "private_Daw7D3XdkqD6UbrrBX6/bH3G52E=";
+    
+    // Free plan limits
+    const BANDWIDTH_LIMIT_GB = 20;
+    const STORAGE_LIMIT_GB = 3;
+
+    async function fetchUsage() {
+        if (PRIVATE_KEY === "your_private_api_key_here" || !PRIVATE_KEY) {
+            showError("Please edit the HTML file and paste your Private API Key inside the script tag.");
+            return;
+        }
+
+        // ImageKit's API resets bandwidth on the 1st of every month [2].
+        // The API response includes data from the start date and excludes the end date [6].
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1).toISOString().split('T')[0];
+
+        const url = `https://api.imagekit.io/v1/accounts/usage?startDate=${startOfMonth}&endDate=${nextMonth}`;
+        
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    // Basic Auth uses the private key as the username with no password
+                    'Authorization': 'Basic ' + btoa(PRIVATE_KEY + ':')
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) throw new Error("Unauthorized: Invalid Private Key.");
+                throw new Error(`API Error: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            // Convert bytes to Gigabytes
+            const bytesToGB = (bytes) => (bytes / (1024 * 1024 * 1024)).toFixed(2);
+            
+            const bwUsed = bytesToGB(data.bandwidthBytes);
+            const stUsed = bytesToGB(data.mediaLibraryStorageBytes);
+
+            // Hide loading, show stats
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('stats').style.display = 'block';
+            
+            // Inject text values
+            document.getElementById('bandwidth').innerText = bwUsed;
+            document.getElementById('storage').innerText = stUsed;
+
+            // Calculate and set progress bar widths (capped at 100%)
+            const bwPercent = Math.min((bwUsed / BANDWIDTH_LIMIT_GB) * 100, 100);
+            const stPercent = Math.min((stUsed / STORAGE_LIMIT_GB) * 100, 100);
+
+            const bwBar = document.getElementById('bw-progress');
+            const stBar = document.getElementById('st-progress');
+
+            bwBar.style.width = bwPercent + '%';
+            stBar.style.width = stPercent + '%';
+
+            // Change progress bar color to red if usage exceeds 90% of the free limit
+            if (bwPercent >= 90) bwBar.style.background = '#d32f2f';
+            if (stPercent >= 90) stBar.style.background = '#d32f2f';
+
+        } catch (error) {
+            showError("Failed to fetch data: " + error.message);
+        }
+    }
+
+    function showError(msg) {
+        document.getElementById('loading').style.display = 'none';
+        const errDiv = document.getElementById('error');
+        errDiv.innerText = msg;
+        errDiv.style.display = 'block';
+    }
+
+    // Execute the fetch immediately when the page loads
+    fetchUsage();
+</script>
+
+</body>
+</html>
